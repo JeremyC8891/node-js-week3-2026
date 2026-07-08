@@ -1,6 +1,6 @@
 const express = require('express');
 const fs = require('node:fs');
-const { formidable } = require('formidable');
+const formidable = require('formidable');
 
 // ⚠️ 寫作業前先 `npm start` 打開 http://localhost:3000/docs 看 Swagger UI 的規格。
 // 💡 /* 作答區 ... */ 是答題提示區，取消註解後填入你的程式碼。
@@ -25,5 +25,35 @@ const router = express.Router();
 /* 作答區
 router.METHOD('PATH', (req, res) => { ... });
 */
+router.post('/', (req, res) => {
+	const form = new formidable.IncomingForm({
+		uploadDir,
+		keepExtensions: true,
+		maxFileSize,
+	});
+
+	try {
+		form.parse(req, (err, fields, files) => {
+			if (err) {
+				console.error('form.parse error:', err);
+				return res.status(500).json({ error: err.message });
+			}
+
+			let file = files.image;
+			if (Array.isArray(file)) file = file[0];
+			if (!file) {
+				return res.status(400).json({ error: 'No file uploaded' });
+			}
+
+			res.status(200).json({
+				filename: file.originalFilename,
+				sizeKB: Math.round(file.size / 1024),
+				savedPath: file.filepath,
+			});
+		});
+	} catch (err) {
+		return res.status(500).json({ error: err.message });
+	}
+});
 
 module.exports = router;
